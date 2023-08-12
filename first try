@@ -1,0 +1,88 @@
+library(readxl)
+foodaccess <- read_excel("FoodAccessResearchAtlasData2019.xlsx", sheet = 3)
+
+str(foodaccess)
+
+write.csv(foodaccess, "FoodAccessResearchAtlasData2019.csv", row.names = FALSE)
+
+
+foodaccess[foodaccess == "NULL"] <- NA  #replace all the null with na
+
+dim(foodaccess) #[1] 72531   147
+
+foodaccess$Urban <- as.factor(foodaccess$Urban)
+foodaccess$State <- as.factor(foodaccess$State)
+foodaccess$GroupQuartersFlag <- as.factor(foodaccess$GroupQuartersFlag)
+foodaccess$MedianFamilyIncome <- as.numeric(foodaccess$MedianFamilyIncome)
+foodaccess[, 10:15] <- lapply(foodaccess[, 10:15], function(x) as.factor(as.numeric(x)))
+which(names(foodaccess) == "LILATracts_1And10") # find the index of the column # 10
+which(names(foodaccess) == "LowIncomeTracts") #15
+which(names(foodaccess) == "LA1and10") #18
+which(names(foodaccess) == "LATractsVehicle_20") #25
+foodaccess[, 18:25] <- lapply(foodaccess[, 18:25], function(x) as.factor(as.numeric(x)))
+which(names(foodaccess) == "LAPOP1_10") #26
+foodaccess[, 26:147] <- lapply(foodaccess[, 26:147], function(x) as.numeric(as.character(x)))
+foodaccess[,147] #double # last column
+
+summary(foodaccess)
+
+boxplot(MedianFamilyIncome ~ State, data=foodaccess, main="Median Family Income by State", xlab="State", ylab="Median Family Income")
+state_income <- aggregate(MedianFamilyIncome ~ State, data=foodaccess, FUN=mean)
+state_with_highest_income <- state_income$State[which.max(state_income$MedianFamilyIncome)]
+print(paste("The state with the highest median family income is:", state_with_highest_income))
+
+anova_model <- aov(MedianFamilyIncome ~ State, data=foodaccess)
+summary(anova_model)
+
+plot(foodaccess$MedianFamilyIncome, foodaccess$PovertyRate, main="Scatter Plot of Median Family Income vs Poverty Rate", xlab="Median Family Income", ylab="Poverty Rate")
+
+
+# Get the unique states
+states <- unique(foodaccess$State)
+
+# Loop through each state and create a scatter plot
+for (state in states) {
+  subset_data <- subset(foodaccess, State == state)
+  plot(subset_data$MedianFamilyIncome, subset_data$PovertyRate, main=paste("Scatter Plot of Median Family Income vs Poverty Rate in", state), xlab="Median Family Income", ylab="Poverty Rate")
+  # Pause to allow time to view each plot
+  readline(prompt="Press [Enter] to continue to next plot...")
+}
+
+boxplot(MedianFamilyIncome ~ LA1and10, data = foodaccess, main="Boxplot of Median Family Income by Low Access Tract", xlab="Low Access Tract (1 = Yes, 0 = No)", ylab="Median Family Income")
+
+# Subset the data by LA1and10
+group_0 <- foodaccess$MedianFamilyIncome[foodaccess$LA1and10 == 0]
+group_1 <- foodaccess$MedianFamilyIncome[foodaccess$LA1and10 == 1]
+
+# Perform a t-test
+t_test_result <- t.test(group_0, group_1)
+
+# Print the result
+print(t_test_result)
+
+library(ggplot2)
+
+# Create a ggplot object
+p <- ggplot(foodaccess, aes(x = as.factor(LA1and10), y = MedianFamilyIncome)) +
+  geom_boxplot() +
+  facet_wrap(~ State, scales = "free") +
+  labs(title = "Boxplot of Median Family Income by Low Access Tract",
+       x = "Low Access Tract (1 = Yes, 0 = No)",
+       y = "Median Family Income")
+
+
+# Print the plot
+print(p)
+
+table(foodaccess$LowIncomeTracts, foodaccess$LA1and10)
+
+# Create a mosaic plot
+mosaicplot(table(foodaccess$LowIncomeTracts, foodaccess$LA1and10),
+           main = "Mosaic Plot of Low Income Tracts vs Low Access Tract",
+           xlab = "Low Income Tracts (1 = Yes, 0 = No)",
+           ylab = "Low Access Tract (1 = Yes, 0 = No)",
+           color = c("red", "blue"))
+
+barplot(table(foodaccess$LowIncomeTracts, foodaccess$HUNVFlag), beside = TRUE, legend = TRUE, main = "Low Income Tracts vs Low Vehicle Access", xlab = "Low Income Tracts", ylab = "Count")
+
+chisq.test(table(foodaccess$LowIncomeTracts, foodaccess$HUNVFlag))
