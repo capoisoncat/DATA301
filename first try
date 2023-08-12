@@ -86,3 +86,5 @@ mosaicplot(table(foodaccess$LowIncomeTracts, foodaccess$LA1and10),
 barplot(table(foodaccess$LowIncomeTracts, foodaccess$HUNVFlag), beside = TRUE, legend = TRUE, main = "Low Income Tracts vs Low Vehicle Access", xlab = "Low Income Tracts", ylab = "Count")
 
 chisq.test(table(foodaccess$LowIncomeTracts, foodaccess$HUNVFlag))
+
+### this is my first attempt using Git 13 Aug 12.10am
